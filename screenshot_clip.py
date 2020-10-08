@@ -9,6 +9,7 @@
 import sys
 import subprocess
 import time
+import os
 
 import tkinter as tk
 from tkinter import ttk
@@ -17,7 +18,10 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 from pyscreeze import screenshot
 
-IMAGE_H = 300
+IMAGE_H = 300 # display image height
+TEMP_FILE = "~/Desktop/temp_screenshot.png" # place to save temporary screenshot
+TEMP_FILE = os.path.expanduser(TEMP_FILE)
+
 class GUI(tk.Frame):
     def __init__(self, master=None, image=None, **kwargs):
         super().__init__(master, **kwargs)
@@ -44,12 +48,12 @@ class GUI(tk.Frame):
         if self.b_box:
             new_box = [x*self.scale for x in self.b_box]
             new_img = self.gin_image.crop(new_box)
-            new_img.save('temp.png', format='PNG')
-            # ~ os.system('xclip -selection clipboard -target image/png -i temp.png &')
-            subprocess.run('xclip -selection clipboard -target image/png -i temp.png'.split())
+            new_img.save(TEMP_FILE, format='PNG')
+            subprocess.run('xclip -selection clipboard -target image/png -i'.split() + [TEMP_FILE])
         self.quit()
 
 class BoxDrawCanvas(tk.Canvas):
+    """A canvas that will let you draw a box on it by clicking and dragging the mouse."""
     def __init__(self, master=None, **kwargs):
         self.command = kwargs.pop('command')
         super().__init__(master, **kwargs)
@@ -81,14 +85,7 @@ class BoxDrawCanvas(tk.Canvas):
             self.delete(self.refs.pop())
 
 def from_screen():
-    try:
-        img = screenshot()
-        from_img(img)
-    except Exception as e:
-        root = tk.Tk()
-        root.withdraw()
-        messagebox.showerror("Error", e)
-        raise
+    from_img(screenshot())
 
 def from_img(img):
     if isinstance(img, str):
@@ -106,6 +103,7 @@ def main():
     else:
         from_screen()
     time.sleep(600) # sleep for 5 minutes to keep the clipboard active
+    os.remove(TEMP_FILE)
 
 if __name__ == '__main__':
 
